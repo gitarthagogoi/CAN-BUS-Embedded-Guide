@@ -1,1 +1,278 @@
+# Physical Layer Debugging (Start Here First)
 
+Before checking software or configuration, always verify the physical layer.  
+Most CAN failures originate from incorrect wiring, termination, or transceiver configuration.
+
+---
+
+## Basic CAN Hardware Setup
+
+A typical CAN setup includes:
+- Microcontroller
+- CAN Controller (internal or external)
+- CAN Transceiver (e.g., MCP2551, SN65HVD230)
+- CAN Bus (CAN_H and CAN_L lines)
+- Termination Resistors
+
+## Basic Building Block
+MCU ↔ CAN Controller ↔ CAN Transceiver ↔ CAN Bus ↔ Transceiver ↔ MCU
+
+---
+
+## CAN_H and CAN_L Wiring
+### Symptoms of Wrong Wiring:
+- No communication  
+- Constant errors  
+- Bus not responding  
+
+### Common Mistakes:
+- Swapped CAN_H and CAN_L  
+- Loose connections  
+- Missing common ground between nodes  
+
+### Solution:
+- Ensure CAN_H ↔ CAN_H and CAN_L ↔ CAN_L  
+- Connect GND between all nodes  
+- Use short and clean wiring for testing  
+
+---
+
+## Termination Resistors (Critical)
+### Symptoms:
+- Unstable communication  
+- Random errors  
+- Works sometimes, fails sometimes  
+
+### Requirement:
+- 120Ω resistor at **each end of the bus**
+[120Ω] ---- CAN BUS ---- [120Ω]
+
+
+### Common Mistakes:
+- Missing termination  
+- Only one resistor is used  
+- Too many resistors  
+
+### Solution:
+- Place exactly two 120Ω resistors (at both ends)  
+- Check the Resistance between CAN_H and CAN_L Bus, it should be between 45ohm to 65ohm.
+
+---
+
+## Slope Control (Rs Pin)
+
+Many CAN transceivers (like MCP2551) use an **Rs pin** to control signal slope.
+
+### What Rs Pin Does:
+- Controls rise/fall time of CAN signals  
+- Helps reduce EMI (electromagnetic interference)
+
+### Common Configurations:
+- **Rs connected to GND**
+  - High-speed mode  
+  - Fast signal edges  
+  - Suitable for most applications  
+
+- **Rs connected via resistor**
+  - Slower edges  
+  - Reduced EMI  
+  - Used in noisy environments  
+
+### Common Mistakes:
+- Leaving Rs floating  
+- Incorrect resistor value  
+
+### Solution:
+- For most setups, connect Rs directly to GND  
+- Avoid floating pins  
+
+---
+
+## Power and Grounding
+### Symptoms:
+- Intermittent failures  
+- Unstable communication  
+
+### Common Issues:
+- No shared ground  
+- Power supply noise  
+
+### Solution:
+- Ensure all nodes share common ground  
+- Use stable power supply  
+- Add decoupling capacitors near transceiver  
+
+---
+
+## Quick Physical Layer Checklist
+Before debugging software, verify:
+- [ ] CAN_H and CAN_L correctly connected  
+- [ ] Common ground shared  
+- [ ] Two 120Ω termination resistors present  
+- [ ] Rs pin properly configured (not floating)  
+- [ ] Transceiver powered correctly  
+
+---
+
+# Software Configuration Errors (After Hardware Check)
+Once the physical layer is verified, the next major source of CAN issues is incorrect software configuration.
+These errors are subtle and often misleading, as the system may initialize correctly but still fail during communication.
+
+---
+
+## Problem: Incorrect Bit Timing Configuration
+
+### Symptoms:
+- No communication between nodes  
+- RX/TX error counters increasing  
+- Messages not acknowledged  
+
+### Causes:
+- Different baud rates across nodes  
+- Incorrect prescaler or segment values
+
+### Solution:
+- Ensure all nodes use the same baud rate  
+- Verify Prescaler, BS1, BS2 values  
+- Double-check clock frequency assumptions  
+
+---
+
+## Problem: CAN Not Started Properly
+### Symptoms:
+- CAN initialized but no transmission  
+- No activity on bus  
+- Peripheral appears idle  
+
+### Causes:
+- CAN peripheral not started  
+- Incorrect initialization sequence  
+
+### Solution:
+HAL_CAN_Start(&hcan);
+- Always call the start function after initialization  
+- Ensure no errors during init  
+
+---
+
+## Problem: Wrong Mode Configuration
+
+### Symptoms:
+- No communication with other nodes  
+- Works only in loopback  
+- No ACK received  
+
+### Causes:
+- CAN set to:
+  - Loopback mode  
+  - Silent mode  
+
+### Solution:
+- Use **Normal Mode** for actual communication  
+- Use loopback only for testing  
+
+---
+
+## Problem: Filter Misconfiguration
+
+### Symptoms:
+- Messages transmitted but not received  
+- RX interrupt never triggered  
+
+### Causes:
+- Filter rejecting all messages  
+- Wrong ID/mask configuration  
+- Wrong FIFO assignment  
+
+### Solution:
+- For debugging, use "accept all" filter  
+- Verify ID type (standard vs extended)  
+- Ensure filter is activated  
+
+---
+
+## Problem: RX Interrupt Not Enabled
+
+### 🔍 Symptoms:
+- Messages present on the bus  
+- No data received in the software  
+
+### Causes:
+- Interrupt not activated  
+- NVIC not configured  
+
+### Solution:
+HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO0_MSG_PENDING);
+- Enable interrupt in NVIC  
+- Verify callback function implementation  
+
+---
+
+## Problem: Transmission Mailbox Issues (STM32)
+### Symptoms:
+- Transmission fails randomly  
+- Messages not sent  
+- Mailbox full  
+
+### Causes:
+- Mailbox not free  
+- No retry mechanism  
+- Continuous transmission attempts  
+
+### Solution:
+- Check mailbox availability before sending  
+- Handle transmission status properly  
+- Avoid flooding the bus  
+
+---
+
+## Problem: Wrong ID Type (Standard vs Extended)
+### Symptoms:
+- Messages not received  
+- Filter mismatch  
+
+### Causes:
+- Sender uses 11-bit ID  
+- Receiver expects 29-bit ID  
+
+### Solution:
+- Ensure both nodes use same ID format  
+- Match filter configuration accordingly  
+
+---
+
+## Problem: HAL_CAN_ERROR_PARAM
+### Symptoms:
+- Error during initialization or transmission  
+- HAL returns parameter error  
+
+### Causes:
+- Invalid configuration values  
+- Uninitialized structures  
+- Incorrect parameter ranges  
+
+### Solution:
+- Validate all configuration values (Especially Bit Timing and Clock Frequency)
+- Ensure structures are properly initialized  
+- Recheck timing parameters  
+
+---
+
+## Software Debugging Checklist
+After hardware verification, follow this order:
+1. **Check Bit Timing**
+   - Baud rate  
+   - Prescaler and segments  
+2. **Check Initialization**
+   - CAN init successful  
+   - CAN started  
+3. **Check Mode**
+   - Normal mode enabled  
+4. **Check Filters**
+   - Accepting correct IDs  
+5. **Check Interrupts**
+   - RX interrupt enabled  
+   - NVIC configured  
+6. **Check Error Codes**
+   - HAL error flags  
+   - TEC/REC counters  
