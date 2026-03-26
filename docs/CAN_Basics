@@ -1,1 +1,135 @@
+## What is CAN?
+Controller Area Network is a robust, message-based communication protocol designed for reliable data exchange between multiple embedded devices over a shared bus.
 
+It is widely used in:
+* Automotive systems (ECUs, sensors)
+* Industrial automation
+* Robotics and embedded systems
+
+Unlike UART or SPI, CAN does **not use a master-slave model**. Every node can transmit and receive.
+
+---
+
+## 🔌 Basic Concept
+In a CAN network:
+* All nodes are connected to the same **two-wire bus** (CAN_H and CAN_L)
+* Messages are **broadcasted** (not sent to a specific device)
+* Each message has an **identifier**, not an address
+
+Important Note:
+> Nodes decide whether to accept a message based on its ID, not who sent it.
+
+---
+
+## CAN Frame Structure
+A standard CAN frame consists of:
+* **Identifier (ID)** → Defines priority and meaning of message
+* **Control Field** → Data length (0–8 bytes)
+* **Data Field** → Actual payload
+* **CRC** → Error detection
+* **ACK** → Acknowledgement
+* **EOF** → End of frame
+
+### Types of Frames:
+* Data Frame (most common)
+* Remote Frame
+* Error Frame
+* Overload Frame
+
+---
+
+## Standard vs Extended ID
+
+| Type     | Bits | Description                       |
+| -------- | ---- | --------------------------------- |
+| Standard | 11   | Faster, commonly used             |
+| Extended | 29   | More IDs, used in complex systems |
+
+Lower ID = Higher priority
+
+---
+
+## Arbitration (Most Important)
+CAN uses **non-destructive arbitration**.
+* Multiple nodes can transmit at the same time
+* The message with **lowest ID wins**
+* Other nodes automatically stop and retry
+
+✔ No data corruption
+✔ No collisions like Ethernet
+
+---
+
+## Communication Model
+* Broadcast-based
+* No direct addressing
+* Multiple receivers can accept the same message
+
+Example:
+* Sensor sends temperature (ID: 0x101)
+* Multiple nodes (display, controller) can read it
+
+---
+
+## Error Handling (Why CAN is powerful)
+CAN has built-in error detection:
+* CRC check
+* Bit monitoring
+* Frame check
+* Acknowledgement check
+
+Each node maintains:
+* **TEC (Transmit Error Counter)**
+* **REC (Receive Error Counter)**
+
+### States:
+* Error Active
+* Error Passive
+* Bus Off (critical failure)
+
+This is extremely important for debugging.
+
+---
+
+## Bit Timing (Critical)
+CAN communication depends heavily on **precise timing**.
+Bit timing is determined by:
+* Prescaler
+* Time segments (Sync, Propagation, Phase1, Phase2)
+
+Even small mismatches between nodes can:
+* Break communication
+* Increase error counters
+* Cause bus failure
+
+---
+
+## Physical Layer
+CAN uses:
+* Differential signaling (CAN_H & CAN_L)
+* Termination resistors (typically 120Ω at both ends)
+
+Common transceivers:
+* MCP2551
+* SN65HVD230 (Better in terms of Noise Immunity)
+
+---
+
+## Key Takeaways
+* CAN is **message-based, not address-based**
+* Lower ID = Higher priority
+* Built-in arbitration prevents collisions
+* Error counters are crucial for debugging
+* Bit timing must match across all nodes
+
+---
+
+## Next Steps
+
+* Learn about **bit timing configuration** → see `bit-timing.md`
+* Explore **debugging techniques** → see `common_errors.md`
+
+
+* **real signal diagrams**
+* **STM32 register-level explanation**
+* or connect this to **Cyphal/UAVCAN (very high impact for your profile)**
