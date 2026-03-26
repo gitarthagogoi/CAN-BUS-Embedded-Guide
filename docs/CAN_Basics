@@ -10,7 +10,7 @@ Unlike UART or SPI, CAN does **not use a master-slave model**. Every node can tr
 
 ---
 
-## 🔌 Basic Concept
+## Basic Concept
 In a CAN network:
 * All nodes are connected to the same **two-wire bus** (CAN_H and CAN_L)
 * Messages are **broadcasted** (not sent to a specific device)
