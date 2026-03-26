@@ -1,1 +1,104 @@
+# CAN Bit Timing
+
+## What is Bit Timing?
+In Controller Area Network (CAN), communication is synchronized using precise time segments within each bit.
+Each bit is divided into smaller units called **Time Quanta (TQ)**.
+
+> All nodes on the CAN bus must use the same bit timing configuration, otherwise communication will fail.
+
+---
+
+## Structure of a CAN Bit
+
+Each CAN bit is divided into the following segments:
+| Sync_Seg | Prop_Seg | Phase_Seg1 | Phase_Seg2 |
+
+
+### Segment Details:
+
+- **Sync Segment (Sync_Seg)**  
+  - Fixed to 1 Time Quantum  
+  - Used for synchronization
+
+- **Propagation Segment (Prop_Seg)**  
+  - Compensates for signal delay across the bus
+
+- **Phase Segment 1 (Phase_Seg1)**  
+  - Can be extended during resynchronization
+
+- **Phase Segment 2 (Phase_Seg2)**  
+  - Can be shortened during resynchronization
+
+---
+
+## Bit Time Calculation
+Bit Time = (Sync_Seg + Prop_Seg + Phase_Seg1 + Phase_Seg2) × TQ
+Baud Rate = 1 / Bit Time
+
+---
+
+## Time Quantum (TQ)
+
+Time Quantum depends on:
+- CAN peripheral clock
+- Prescaler
+
+TQ = Prescaler / CAN Clock
+
+---
+
+## Why Bit Timing Matters
+Even if hardware and wiring are correct, CAN communication will fail if bit timing is mismatched.
+
+### Common Symptoms:
+- RX error counter increasing  
+- TX messages not acknowledged  
+- CAN stuck in error states  
+- No communication between nodes  
+
+---
+
+## Real-World Debug Insight
+
+A typical issue:
+- Node A configured at 500 kbps  
+- Node B slightly mismatched (~480 kbps effective)  
+
+Result:
+- No ACK received  
+- RX error counter increases (often reaching 255)  
+- Communication fails  
+
+> This often looks like a hardware issue but is actually a timing mismatch.
+
+---
+
+## Key Configuration Parameters
+
+Typical parameters used in CAN configuration:
+- **Prescaler**
+- **BS1 (Bit Segment 1)** → Prop_Seg + Phase_Seg1  
+- **BS2 (Bit Segment 2)** → Phase_Seg2  
+- **SJW (Synchronization Jump Width)**
+
+> All nodes must use matching configurations.
+
+---
+
+## Practical Rules
+
+- All nodes must use the same baud rate  
+- Sample point should be around 75%–90% (87.5% Optimal)  
+- Use standard configurations when possible  
+- Avoid random tuning without calculation  
+
+---
+
+## Debug Checklist
+
+If CAN is not working:
+- Verify baud rate on all nodes  
+- Check prescaler and segment values  
+- Ensure same clock configuration  
+- Confirm sample point alignment  
 
