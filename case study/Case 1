@@ -65,6 +65,8 @@ Then check:
 - Transceiver mode pins (RS, STB, EN)
 - Not just MCU configuration
 
-# Bonus Tip
-Always keep a multimeter with you and check the voltage of the CAN_H and CAN_L pins, it should stay in idle condition (as per the datasheet of the
-transceiver) When not transmitting anything, then the establishment of the CAN Bus will happen, and an ACK will be received.
+
+# Bonus Tip:
+Always verify the idle voltage of CAN_H and CAN_L using a multimeter or oscilloscope.
+In a healthy bus, both lines stay at their recessive levels when no transmission occurs.
+Incorrect idle levels indicate a physical layer issue—communication will fail regardless of firmware correctness.
