@@ -1,0 +1,70 @@
+## Case Study: CAN Not Working Due to RS Pin Misconfiguration
+
+### Problem
+CAN communication was not getting established between nodes.
+- No frames observed on bus
+- CAN working in loopback mode but not able to transmit in Normal Mode
+- No ACK was happening in the BUS
+- Software configuration appeared correct
+---
+
+### My Initial Assumptions
+- Suspected firmware issue (bit timing, filters)
+- Verified CAN initialization multiple times
+- Checked baud rate → correct
+- Tried Different baud rate with different sampling rate
+
+---
+
+### Investigation
+
+After prolonged debugging on software side, hardware was rechecked.
+
+Observation:
+- RS(Slope Control) pin of CAN transceiver was connected through a resistor nor even hard GND connected.
+- This caused incorrect mode configuration
+
+---
+
+### Root Cause
+
+The RS (slope control) pin controls:
+- Operating mode (high-speed vs standby)
+- Signal edge rate (affects communication reliability)
+
+Due to improper connection:
+- Transceiver was not operating in proper high-speed mode
+- CAN bus signaling was not correctly driven
+
+---
+
+### Fix
+- RS pin was properly grounded (or configured as per datasheet)
+- Removed incorrect resistor configuration (# Very Important)
+
+Result:
+- CAN communication established immediately
+
+---
+
+### Key Learning
+
+- CAN controller debugging is misleading — many failures are hardware-related
+- Transceiver pins (like RS) are critical and often overlooked
+- Always verify transceiver configuration before deep software debugging
+
+---
+
+### Practical Insight
+
+If:
+- No communication at all
+- No dominant/recessive activity visible
+
+Then check:
+- Transceiver mode pins (RS, STB, EN)
+- Not just MCU configuration
+
+# Bonus Tip
+Always keep a multimeter with you and check the voltage of the CAN_H and CAN_L pins, it should stay in idle condition (as per the datasheet of the
+transceiver) When not transmitting anything, then the establishment of the CAN Bus will happen, and an ACK will be received.
